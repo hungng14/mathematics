@@ -49,7 +49,7 @@ pub fn add_level(client: &mut Client) -> bool {
         return c > 0;
       }
       Err(e) => {
-        println!("Add Failed {}", e);
+        println!("\nAdd Failed {}\n", e);
         return false;
       }
     }
