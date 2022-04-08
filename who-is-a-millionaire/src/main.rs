@@ -1,9 +1,14 @@
 use postgres::{Client, Error, NoTls};
 mod services;
-
 fn main() -> Result<(), Error> {
+  // let mut connection = types::SQLConnection {
+  //   client: Client::connect(
+  //     "postgresql://root:123456@172.22.0.3:5432/who_is_a_millionaire",
+  //     NoTls,
+  //   )?
+  // };
   let mut client = Client::connect(
-    "postgresql://root:123456@172.22.0.3:5432/who_is_a_millionaire",
+    "postgresql://root:123456@172.22.0.2:5432/who_is_a_millionaire",
     NoTls,
   )?;
 
@@ -50,7 +55,7 @@ fn main() -> Result<(), Error> {
     if ok {
       println!("Select Option Admin");
       println!("1. Levels");
-      println!("1. Questions");
+      println!("2. Questions");
       println!("\nEnter your option");
       let mut option = String::new();
 
@@ -58,6 +63,10 @@ fn main() -> Result<(), Error> {
       option = option.replace("\n", "");
       if option == "1" {
         services::levels::run_level_board(&mut client);
+      }
+
+      if option == "2" {
+        services::question::run_question_board(&mut client);
       }
     }
   }

@@ -7,7 +7,7 @@ pub fn add_level(client: &mut Client) -> bool {
     println!("---- CREATING NEW LEVEL ----");
 
     let level: i32;
-    let mut label = String::new();
+    let mut label: String;
 
     loop {
       let mut tmp_level = String::new();
