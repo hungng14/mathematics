@@ -1,4 +1,4 @@
-use std::vec;
+use std::{vec, fmt::format};
 
 use postgres::Client;
 // use std::collections::HashMap;
@@ -13,17 +13,21 @@ struct Level {
 }
 
 #[derive(Debug)]
-struct Question_Detail {
-    option: String,
-    is_correct: bool,
+pub struct QuestionDetail {
+    #[allow(dead_code)]
+    pub option: String,
+    #[allow(dead_code)]
+    pub is_correct: bool,
 }
 
 #[derive(Debug)]
-struct Question {
-    id: Uuid,
-    name: String,
-    level: i32,
-    options: Vec<Question_Detail>,
+pub struct Question {
+    pub id: Uuid,
+    #[allow(dead_code)]
+    pub name: String,
+    #[allow(dead_code)]
+    pub level: i32,
+    pub options: Vec<QuestionDetail>,
 }
 
 fn get_answer(label: &'static str) -> String {
@@ -159,8 +163,19 @@ fn add_question(client: &mut Client) -> bool {
     }
 }
 
-fn list_question(client: &mut Client) -> Vec<Question> {
-    let query = client.query("SELECT * FROM question RIGHT JOIN question_detail ON question.id=question_detail.question_id", &[]).unwrap();
+pub struct QueryListQuestion {
+  pub level: i32
+}
+
+pub fn list_question(client: &mut Client, query: Option<QueryListQuestion>) -> Vec<Question> {
+    let condition = match query {
+      Some(q) => {
+        format!("WHERE level={}", q.level)
+      },
+      None => "".to_string()
+    };
+    let query_str = format!("SELECT * FROM question RIGHT JOIN question_detail ON question.id=question_detail.question_id {}", condition);
+    let query = client.query(&query_str, &[]).unwrap();
     let mut questions: Vec<Question> = vec![];
 
     for row in query {
@@ -174,7 +189,7 @@ fn list_question(client: &mut Client) -> Vec<Question> {
             }
         }
 
-        let question_detail = Question_Detail {
+        let question_detail = QuestionDetail {
             option: row.get("option"),
             is_correct: match row.get("is_correct") {
                 Some(v) => v,
@@ -240,7 +255,7 @@ pub fn run_question_board(client: &mut Client) {
         }
 
         if option == "3" {
-            let questions = list_question(client);
+            let questions = list_question(client, None);
             println!("List Questions:");
             println!("{:#?}", questions);
         }
