@@ -2,7 +2,78 @@ use postgres::{Client, Error, NoTls};
 mod services;
 use services::question::{list_question, QueryListQuestion};
 
+fn challenge_of_round(level: i32, client: &mut Client) -> bool {
+    let easy_questions = list_question(client, Some(QueryListQuestion { level, random: true }));
+    let total_questions = easy_questions.len();
+    let mut total_question_passed: usize = 0;
+    let mut passed_easy_level = true;
+    let mut current_question: usize = 0;
 
+    while total_question_passed < total_questions {
+        let question = easy_questions.get(current_question).unwrap();
+        let mut your_answer = String::new();
+        println!("Question {}: {}", current_question + 1, question.name);
+        println!("A. {}", question.options.get(0).unwrap().option);
+        println!("B. {}", question.options.get(1).unwrap().option);
+        println!("C. {}", question.options.get(2).unwrap().option);
+        println!("D. {}", question.options.get(3).unwrap().option);
+        println!("");
+        print!("Your Answer: ");
+        println!("");
+        std::io::stdin()
+            .read_line(&mut your_answer)
+            .expect("Expect enter your answer");
+        your_answer = your_answer.replace("\n", "");
+        match your_answer.to_lowercase().as_str() {
+            "a" => {
+                if !question.options.get(0).unwrap().is_correct {
+                    passed_easy_level = false;
+                }
+            }
+            "b" => {
+                if !question.options.get(1).unwrap().is_correct {
+                    passed_easy_level = false;
+                }
+            }
+            "c" => {
+                if !question.options.get(2).unwrap().is_correct {
+                    passed_easy_level = false;
+                }
+            }
+            "d" => {
+                if !question.options.get(3).unwrap().is_correct {
+                    passed_easy_level = false;
+                }
+            }
+            _ => {
+                continue;
+            }
+        }
+
+        if !passed_easy_level {
+            break;
+        }
+        current_question += 1;
+        total_question_passed += 1;
+        println!("Congratulations");
+    }
+    if !passed_easy_level {
+        println!("Oops!. Unlucky, Hope to see you next time!");
+        return false;
+    }
+    println!("Wow!. Congratulations, You passed this round");
+    return true;
+}
+
+fn run_countdown_to_start_game() {
+  let mut countdown: u8 = 5;
+  while countdown > 0 {
+      println!("Game will be started in {}s", countdown);
+      let t = std::time::Duration::from_millis(1000);
+      std::thread::sleep(t);
+      countdown -= 1;
+  }
+}
 fn main() -> Result<(), Error> {
     // let mut connection = types::SQLConnection {
     //   client: Client::connect(
@@ -11,7 +82,7 @@ fn main() -> Result<(), Error> {
     //   )?
     // };
     let mut client = Client::connect(
-        "postgresql://root:123456@172.22.0.3:5432/who_is_a_millionaire",
+        "postgresql://root:123456@172.22.0.2:5432/who_is_a_millionaire",
         NoTls,
     )?;
 
@@ -76,73 +147,35 @@ fn main() -> Result<(), Error> {
             continue;
         }
 
-        let mut countdown: u8 = 5;
-        while countdown > 0 {
-            println!("Game will be started in {}s", countdown);
-            let t = std::time::Duration::from_millis(1000);
-            std::thread::sleep(t);
-            countdown -= 1;
-        }
-
-        let easy_questions = list_question(&mut client, Some(QueryListQuestion { level: 2 }));
-        println!("List easy questions: {:#?}", easy_questions);
-
-        let total_questions = easy_questions.len();
-        let mut total_question_passed: usize = 0;
-        let mut passed_easy_level = true;
-        let mut current_question: usize = 0;
-        
-
-        while total_question_passed < total_questions {
-            let question = easy_questions.get(current_question).unwrap();
-            let mut your_answer = String::new();
-            println!("Question {}: {}", current_question + 1, question.name);
-            println!("A. {}", question.options.get(0).unwrap().option);
-            println!("B. {}", question.options.get(1).unwrap().option);
-            println!("C. {}", question.options.get(2).unwrap().option);
-            println!("D. {}", question.options.get(3).unwrap().option);
-            println!("");
-            print!("Your Answer: ");
-            println!("");
-            std::io::stdin().read_line(&mut your_answer).expect("Expect enter your answer");
-            your_answer = your_answer.replace("\n", "");
-            match your_answer.to_lowercase().as_str() {
-              "a" => {
-                if !question.options.get(0).unwrap().is_correct {
-                  passed_easy_level = false;
-                }
-              },
-              "b" => {
-                if !question.options.get(1).unwrap().is_correct {
-                  passed_easy_level = false;
-                }
-              },
-              "c" => {
-                if !question.options.get(2).unwrap().is_correct {
-                  passed_easy_level = false;
-                }
-              },
-              "d" => {
-                if !question.options.get(3).unwrap().is_correct {
-                  passed_easy_level = false;
-                }
-              },
-              _ => {
-                continue;
-              }
-            }
-
-            if !passed_easy_level {
-                break;
-            }
-            current_question += 1;
-            total_question_passed += 1;
-            println!("Congratulations");
-        }
-        if !passed_easy_level {
-          println!("Oops!. Unlucky, Hope to see you next time!")
-        } else {
-          println!("Wow!. Congratulations, You passed round 1");
+        loop {
+          run_countdown_to_start_game();
+          println!("--- EASY LEVEL ----");
+          println!("Reward for this round are: 200 USDT");
+          let passed = challenge_of_round(2, &mut client);
+          if !passed {
+            println!("---Unlucky. Thank you ----");
+            break;
+          }
+  
+          run_countdown_to_start_game();
+          println!("--- MEDIUM LEVEL ----");
+          println!("Reward for this round are: 1.000.000 USDT");
+          let passed = challenge_of_round(1, &mut client);
+          if !passed {
+            println!("---Unlucky. Thank you ----");
+            break;
+          }
+  
+          run_countdown_to_start_game();
+          println!("--- HARD LEVEL ----");
+          println!("Reward for this round are: 10.000.000 USDT");
+          let passed = challenge_of_round(0, &mut client);
+          if !passed {
+            println!("---Unlucky. Thank you ----");
+            break;
+          }
+          println!("WOW. Congratulations, You Are Victory!");
+          break;
         }
     }
 

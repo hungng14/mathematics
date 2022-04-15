@@ -1,4 +1,4 @@
-use std::{vec, fmt::format};
+use std::{vec};
 
 use postgres::Client;
 // use std::collections::HashMap;
@@ -164,23 +164,24 @@ fn add_question(client: &mut Client) -> bool {
 }
 
 pub struct QueryListQuestion {
-  pub level: i32
+  pub level: i32,
+  pub random: bool
 }
 
 pub fn list_question(client: &mut Client, query: Option<QueryListQuestion>) -> Vec<Question> {
-    let condition = match query {
+    let condition = match &query {
       Some(q) => {
         format!("WHERE level={}", q.level)
       },
       None => "".to_string()
     };
+
     let query_str = format!("SELECT * FROM question RIGHT JOIN question_detail ON question.id=question_detail.question_id {}", condition);
     let query = client.query(&query_str, &[]).unwrap();
     let mut questions: Vec<Question> = vec![];
 
     for row in query {
         let question_id: Uuid = row.get("id");
-        println!("id {}", question_id);
         let mut idx_found: i32 = -1;
         for (idx, q) in questions.iter().enumerate() {
             if q.id.eq(&question_id) {
